@@ -29,8 +29,141 @@ limit 5`
 |10222-1-2013|83|28|8|2013|Office Chair|20.68|73|80.63|17.36|2.01|
 |10261-1-2017|14|16|25|2017|Multifunction Printers|110.0|1488|30.65|5.51|63.84|
 |10261-2-2017|14|16|25|2017|Multifunction Printers|110.0|1818|25.08|4.51|70.41|
-###### 1. Which products contribute the most to carbon emissions?
+#### Table: Industry Groups
+`select *
+from industry_groups ig 
+limit 4`
+|id|industry_group|
+|--|--------------|
+|1|"Consumer Durables, Household and Personal Products"|
+|2|"Food, Beverage & Tobacco"|
+|3|"Forest and Paper Products - Forestry, Timber, Pulp and Paper, Rubber"|
+|4|"Mining - Iron, Aluminum, Other Metals"|
 
+#### Table: Companies
+`select *
+from companies c 
+limit 4`
+|id|company_name|
+|--|------------|
+|1|"Autodesk, Inc."|
+|2|"Casio Computer Co., Ltd."|
+|3|"Cisco Systems, Inc."|
+|4|"CNX Coal Resources, LP"|
+
+#### Table: Countries
+`select *
+from countries 
+limit 4`
+|id|country_name|
+|--|------------|
+|1|Australia|
+|2|Belgium|
+|3|Brazil|
+|4|Canada|
+
+###### 1. Which products contribute the most to carbon emissions?
+`select pe.product_name, pe.carbon_footprint_pcf
+from product_emissions pe 
+order by pe.carbon_footprint_pcf DESC
+limit 10`
+|product_name|carbon_footprint_pcf|
+|------------|--------------------|
+|Wind Turbine G128 5 Megawats|3718044|
+|Wind Turbine G132 5 Megawats|3276187|
+|Wind Turbine G114 2 Megawats|1532608|
+|Wind Turbine G90 2 Megawats|1251625|
+|Land Cruiser Prado. FJ Cruiser. Dyna trucks. Toyoace.IMV def unit.|191687|
+|Retaining wall structure with a main wall (sheet pile): 136 tonnes of steel sheet piles and 4 tonnes of tierods per 100 meter wall|167000|
+|TCDE|99075|
+|TCDE|99075|
+|Mercedes-Benz GLE (GLE 500 4MATIC)|91000|
+|Electric Motor|87589|
+###### 2. What are the industry groups of these products?
+`select pe.product_name, pe.carbon_footprint_pcf, ig.industry_group
+from product_emissions pe 
+join industry_groups ig 
+on ig.id = pe.industry_group_id
+order by pe.carbon_footprint_pcf DESC
+limit 10`
+|product_name|carbon_footprint_pcf|industry_group|
+|------------|--------------------|--------------|
+|Wind Turbine G128 5 Megawats|3718044|Electrical Equipment and Machinery|
+|Wind Turbine G132 5 Megawats|3276187|Electrical Equipment and Machinery|
+|Wind Turbine G114 2 Megawats|1532608|Electrical Equipment and Machinery|
+|Wind Turbine G90 2 Megawats|1251625|Electrical Equipment and Machinery|
+|Land Cruiser Prado. FJ Cruiser. Dyna trucks. Toyoace.IMV def unit.|191687|Automobiles & Components|
+|Retaining wall structure with a main wall (sheet pile): 136 tonnes of steel sheet piles and 4 tonnes of tierods per 100 meter wall|167000|Materials|
+|TCDE|99075|Materials|
+|TCDE|99075|Materials|
+|Mercedes-Benz GLE (GLE 500 4MATIC)|91000|Automobiles & Components|
+|Electric Motor|87589|Capital Goods|
+###### 3. What are the industries with the highest contribution to carbon emissions?
+Group the data by industry and calculate the total carbon emissions for each industry. Here's the SQL query:
+
+`select ig.industry_group, sum(pe.carbon_footprint_pcf) AS total_carbon_emissions
+from product_emissions pe 
+join industry_groups ig 
+on ig.id = pe.industry_group_id
+group by ig.industry_group
+order by total_carbon_emissions DESC
+limit 10`
+|industry_group|total_carbon_emissions|
+|--------------|----------------------|
+|Electrical Equipment and Machinery|9801558|
+|Automobiles & Components|2582264|
+|Materials|577595|
+|Technology Hardware & Equipment|363776|
+|Capital Goods|258712|
+|"Food, Beverage & Tobacco"|111131|
+|"Pharmaceuticals, Biotechnology & Life Sciences"|72486|
+|Chemicals|62369|
+|Software & Services|46544|
+|Media|23017|
+- So, Electrical Equipment and Machinery is the industry with the highest contribution to carbon emissions.
+###### 4. What are the companies with the highest contribution to carbon emissions?
+Sum up the companies' products' carbon footprints and rank them accordingly. Here's the SQL query:
+
+`select c.company_name , sum(pe.carbon_footprint_pcf) AS total_carbon_emissions
+from product_emissions pe 
+join companies c  
+on c.id = pe.company_id
+group by c.company_name
+order by total_carbon_emissions DESC
+limit 10`
+|company_name|total_carbon_emissions|
+|------------|----------------------|
+|"Gamesa Corporación Tecnológica, S.A."|9778464|
+|Daimler AG|1594300|
+|Volkswagen AG|655960|
+|"Mitsubishi Gas Chemical Company, Inc."|212016|
+|"Hino Motors, Ltd."|191687|
+|Arcelor Mittal|167007|
+|Weg S/A|160655|
+|General Motors Company|137007|
+|"Lexmark International, Inc."|132012|
+|"Daikin Industries, Ltd."|105600|
+###### 5. What are the countries with the highest contribution to carbon emissions?
+`select co.country_name , 
+		sum(pe.carbon_footprint_pcf) AS total_carbon_emissions
+from product_emissions pe 
+join countries co  
+on co.id = pe.country_id
+group by co.country_name
+order by total_carbon_emissions DESC
+limit 10`
+|country_name|total_carbon_emissions|
+|------------|----------------------|
+|Spain|9786130|
+|Germany|2251225|
+|Japan|653237|
+|USA|518381|
+|South Korea|186965|
+|Brazil|169337|
+|Luxembourg|167007|
+|Netherlands|70417|
+|Taiwan|62875|
+|India|24574|
 ###### 6. What is the trend of carbon footprints (PCFs) over the years?
 `SELECT year, count(distinct product_name) as count_product,
 sum(avg_pcf) AS sum_pcf
@@ -48,6 +181,9 @@ FROM (
 | 2015 | 217           | 10810407.00 | 
 | 2016 | 215           | 1608962.17  | 
 | 2017 | 57            | 224799.67   | 
+
+- As a result, we can see that PDFs increased significantly in 2015 due to the introduction of several new products associated with the emissions. However, it tended to decrease gradually. Especially in 2017, there was a significant decrease in the number products associated with the emissions, but the emissions from these products are still very high compared to before.
+###### 7. Which industry groups has demonstrated the most notable decrease in carbon footprints (PCFs) over time?
 `SELECT prod_em.year, ind_gr.industry_group,
 ROUND(AVG(carbon_footprint_pcf),2) AS avg_pcf
 FROM product_emissions AS prod_em
@@ -126,3 +262,4 @@ ORDER BY industry_group, year, avg_pcf DESC`
 | 2013 | Utilities                                                              | 61.00     | 
 | 2016 | Utilities                                                              | 61.00     | 
 
+- Technology Hardware & Equipment industry groups has demonstrated the most notable decrease in carbon footprints (PCFs) over time.
